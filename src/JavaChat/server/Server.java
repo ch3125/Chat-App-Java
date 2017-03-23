@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import JavaChat.server.ServerClient;
 import JavaChat.server.UniqueIdentifier;
+import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.util.UUID;
 
@@ -89,6 +90,33 @@ public class Server  {
         };
         receive.start();
     }
+    private void sendToAll(String message){
+        for(int i=0;i<clients.size();i++){
+            ServerClient client=clients.get(i);
+            send(message.getBytes(),client.address,client.port);
+        }
+    }
+    private void send(final byte[] data,final InetAddress address,final int port){
+        send=new Thread("Send"){
+            @Override
+            public void run(){
+               
+                    DatagramPacket packet=new DatagramPacket(data,data.length,address,port);
+                     try {
+                         socket.send(packet);
+                     } catch (IOException ex) {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                      }
+        }
+        };
+        send.start();
+        
+    }
+    private void send(String message,InetAddress address,int port){
+        message+="/e/";
+        send(message.getBytes(),address,port);
+        
+    }
     private void process(DatagramPacket packet){
         String string=new String(packet.getData());
         if(string.startsWith("/c/")){
@@ -99,6 +127,11 @@ public class Server  {
             System.out.println("Identifier : "+id);
             clients.add(new ServerClient(string.substring(3,string.length()),packet.getAddress(),packet.getPort(),id));
             System.out.println(string.substring(3,string.length()));
+            String ID="/c/"+id;
+            send(ID,packet.getAddress(),packet.getPort());
+        }else if(string.startsWith("/m/")){
+            String message=string.substring(3,string.length());
+            sendToAll(string);
         }else{
             System.out.println(string);
         }
