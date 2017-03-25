@@ -25,10 +25,13 @@ import java.util.UUID;
  */
 public class Server  {
     private List<ServerClient>  clients = new ArrayList<ServerClient>();
+    private List<Integer> clientResponse=new ArrayList<>();
     private int port;
     private DatagramSocket socket;
     private boolean running=false;
     private Thread run,manage,send,receive;
+    private final int MAX_ATTEMPTS=5;
+ 
     public Server(int port) {
       
         this.port = port;
@@ -57,8 +60,29 @@ public class Server  {
             @Override
             public void run(){
                 while(running){
-                    //managing
-                }
+                  
+                        sendToAll("/i/server");
+                        try {
+                                 Thread.sleep(2000);
+                         } catch (InterruptedException ex) {
+                        Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                        for(int i=0;i<clients.size();i++){
+                            ServerClient c=clients.get(i);
+                            if(!clientResponse.contains(c.getID()))
+                            {
+                                if(c.attempt>=MAX_ATTEMPTS){
+                                    disconnect(c.getID(),false);
+                                }
+                                else{
+                                    c.attempt++;
+                                }
+                            }else{
+                                clientResponse.remove(new Integer(c.getID()));
+                                c.attempt=0;
+                            }
+                        }  
+            }
             }
         };
         manage.start();
@@ -133,10 +157,14 @@ public class Server  {
         }else if(string.startsWith("/m/")){
             String message=string.substring(3,string.length());
             sendToAll(string);
-        }else if(string.startsWith("/d/")){
+        }
+      else if(string.startsWith("/d/")){
             String id=string.split("/d/|/e/")[1];
             disconnect(Integer.parseInt(id),true);
         }
+      else if(string.startsWith("/i/")){
+          clientResponse.add(Integer.parseInt(string.split("/i/|/e/")[1]));
+      }
         
         else{
             System.out.println(string);
