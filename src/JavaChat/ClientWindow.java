@@ -16,6 +16,9 @@ import javax.swing.UIManager;
 import javax.swing.text.DefaultCaret;
 import javax.swing.JFrame;
 import JavaChat.Client;
+import static com.sun.java.accessibility.util.AWTEventMonitor.addWindowListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  *
@@ -41,11 +44,13 @@ public class ClientWindow extends JFrame implements Runnable{
             console("connection failed!");
         }
         
-        setVisible(true);
+     
         initComponents();
+        
         myInitComponents();
+        
         console("Attempting a connection to "+address+": "+port+" ,user: "+name);
-        String connectiion="/c/"+name+" connected from "+address+":"+port;
+        String connectiion="/c/"+name+"/e/";
         client.send(connectiion.getBytes());
          running=true;
         run=new Thread(this,"Running");
@@ -65,7 +70,6 @@ public class ClientWindow extends JFrame implements Runnable{
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         jScrollPane1 = new javax.swing.JScrollPane();
         txtHistory = new javax.swing.JTextArea();
@@ -82,9 +86,7 @@ public class ClientWindow extends JFrame implements Runnable{
         txtHistory.getAccessibleContext().setAccessibleName("");
         txtHistory.getAccessibleContext().setAccessibleParent(this);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
-        getContentPane().add(jScrollPane1, gridBagConstraints);
+        getContentPane().add(jScrollPane1, new java.awt.GridBagConstraints());
         jScrollPane1.getAccessibleContext().setAccessibleDescription("");
 
         btnSend.setText("Send");
@@ -107,26 +109,30 @@ public class ClientWindow extends JFrame implements Runnable{
 
     private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
         // TODO add your handling code here:
+        System.out.println("ClientWindow.java--- btnSendActionPerformed");
         String message=txtMessage.getText();
-       send(message);
+       send(message,true);
     }//GEN-LAST:event_btnSendActionPerformed
 
     private void txtMessageKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtMessageKeyPressed
         // TODO add your handling code here:
+        System.out.println("ClientWindow.java--- txtMessageKeyPressed");
         if(evt.getKeyCode()==KeyEvent.VK_ENTER){
-            send(txtMessage.getText());
+            send(txtMessage.getText(),true);
         }
     }//GEN-LAST:event_txtMessageKeyPressed
 
   
     
-    private void send(String message){
+    private void send(String message, boolean text){
     if(message.equals(""))return;
-    message=client.getName()+" : "+message;
-     console(message);
-     message="/m/"+message;
+    if(text){
+    message=client.getName()+": "+message;
+     message="/m/"+message+"/e/";}
+      txtMessage.setText("");
+      System.out.println("ClientWindow.java--- send(message)");
      client.send(message.getBytes());
-        txtMessage.setText("");
+       
 }
     private void myInitComponents() {
         try {
@@ -163,6 +169,14 @@ public class ClientWindow extends JFrame implements Runnable{
         agbc.gridx=2;
         agbc.gridy=2;
         getContentPane().add(btnSend,agbc);
+        addWindowListener(new WindowAdapter(){
+            @Override
+            public void windowClosing(WindowEvent e){
+                String disconnect="/d/"+client.getID()+"/e/";
+                send(disconnect,false);
+                client.close();
+            } 
+    });
         //for text message
         GridBagConstraints bgbc=new GridBagConstraints();
         bgbc.insets=new Insets(0,0,0,5);
@@ -172,20 +186,29 @@ public class ClientWindow extends JFrame implements Runnable{
         bgbc.gridwidth=2;
         getContentPane().add(txtMessage,bgbc);
         txtMessage.requestFocusInWindow();
+           setVisible(true);
     }
     
     public void console(String message){
+         System.out.println("ClientWindow.java--- console");
         txtHistory.append(message+"\n\r");
       txtHistory.setCaretPosition(txtHistory.getDocument().getLength());
     }
     public void listen(){
         listen=new Thread("Listen"){
+        @Override
         public void run(){
             while(running){
+                 System.out.println("ClientWindow.java--- listen");
             String message=client.receive();
             if(message.startsWith("/c/")){
              client.setID(Integer.parseInt(message.split("/c/|/e/")[1]));
              console("Successfully connected to server! ID: "+client.getID());
+          }else if(message.startsWith("/m/"))
+          {
+              String text=message.split("/m/|/e/")[1];
+              System.out.println("text: "+text);
+              console(text);
           }
             }
         }

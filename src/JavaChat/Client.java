@@ -13,7 +13,6 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.text.DefaultCaret;
 
 /**
  *
@@ -59,6 +58,7 @@ public class Client {
           try {
               ip=InetAddress.getByName(address);
                   socket=new DatagramSocket();
+                  System.out.println("Client.java--- openConnection");
              
           } catch (UnknownHostException ex) {
               Logger.getLogger(ClientWindow.class.getName()).log(Level.SEVERE, null, ex);
@@ -75,6 +75,7 @@ public class Client {
           
               byte[] data=new byte[1024];
               DatagramPacket packet=new DatagramPacket(data,data.length);
+              System.out.println("Client.java--- receive");
               try {
               socket.receive(packet);
           } catch (IOException ex) {
@@ -85,6 +86,18 @@ public class Client {
           
           return message;
     }
+       
+       public void close(){
+           new Thread(){
+               @Override
+               public void run(){
+           
+           synchronized(socket){
+           socket.close();
+       }
+       }
+           }.start();
+                   }
     /*
     sending data to serever
     */
@@ -93,6 +106,7 @@ public class Client {
             @Override
             public void run(){
                 try {
+                    System.out.println("Client.java--- send");
                     DatagramPacket packet = new DatagramPacket(data,data.length,ip,port);
                     socket.send(packet);
                 } catch (IOException ex) {
