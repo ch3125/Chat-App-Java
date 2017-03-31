@@ -43,7 +43,7 @@ public class ClientWindow extends JFrame implements Runnable{
     private Thread listen,run;
     private boolean running=false;
     public ClientWindow(String name,String address,int port) {
-       setTitle("Cherno Chat Client");
+       setTitle("Chat Client");
 		client = new Client(name, address, port);
 		boolean connect = client.openConnection(address);
 		if (!connect) {
@@ -225,8 +225,8 @@ public class ClientWindow extends JFrame implements Runnable{
     if(message.equals(""))return;
     if(text){
     message=client.getName()+": "+message;
-     message="/m/"+message+"/e/";}
-      txtMessage.setText("");
+     message="/m/"+message+"/e/";
+      txtMessage.setText("");}
       System.out.println("ClientWindow.java--- send(message)");
      client.send(message.getBytes());
        
@@ -254,6 +254,9 @@ public class ClientWindow extends JFrame implements Runnable{
              text= text.split("/e/")[0];
               System.out.println("text: "+text);
               console(text);
+          }else if(message.startsWith("/i/")){
+              String text="/i/"+client.getID()+"/e/";
+              send(text,false);
           }
             }
         }
