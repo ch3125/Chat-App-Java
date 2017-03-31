@@ -146,8 +146,7 @@ public class Server  {
         String string=new String(packet.getData());
         if(string.startsWith("/c/")){
            // UUID id=UUID.randomUUID();
-           
-            //id.toString();
+           //id.toString();
             int id=UniqueIdentifier.getIdentifier();
             System.out.println("Identifier : "+id);
             clients.add(new ServerClient(string.substring(3,string.length()),packet.getAddress(),packet.getPort(),id));
