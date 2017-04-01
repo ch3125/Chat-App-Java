@@ -17,15 +17,21 @@ import javax.swing.text.DefaultCaret;
 import javax.swing.JFrame;
 import JavaChat.Client;
 import static com.sun.java.accessibility.util.AWTEventMonitor.addWindowListener;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JButton;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
+import JavaChat.OnlineUsers;
+import java.util.Arrays;
 
 /**
  *
@@ -42,6 +48,7 @@ public class ClientWindow extends JFrame implements Runnable{
     private Client client;
     private Thread listen,run;
     private boolean running=false;
+    private OnlineUsers users;
     public ClientWindow(String name,String address,int port) {
        setTitle("Chat Client");
 		client = new Client(name, address, port);
@@ -54,6 +61,7 @@ public class ClientWindow extends JFrame implements Runnable{
 		console("Attempting a connection to " + address + ":" + port + ", user: " + name);
 		String connection = "/c/" + name + "/e/";
 		client.send(connection.getBytes());
+                users=new OnlineUsers();
 		
 		running = true;
 		run = new Thread(this, "Running");
@@ -73,8 +81,25 @@ public class ClientWindow extends JFrame implements Runnable{
 		setSize(880, 550);
 		setLocationRelativeTo(null);
  
-		
+		 
+                menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
  
+		jMenu1 = new JMenu();
+                 jMenu1.setText("File");
+		menuBar.add(jMenu1);
+ 
+		mntmOnlineUsers = new JMenuItem("Online Users");
+		mntmOnlineUsers.addActionListener(new ActionListener() {
+                        @Override
+			public void actionPerformed(ActionEvent e) {
+			   users.setVisible(true);
+			} 
+		}); 
+		jMenu1.add(mntmOnlineUsers);
+ 
+		mntmExit = new JMenuItem("Exit");
+		jMenu1.add(mntmExit);
 		//mntmExit = new JMenuItem("Exit");
 		//mnFile.add(mntmExit);
 		contentPane = new JPanel();
@@ -150,7 +175,8 @@ public class ClientWindow extends JFrame implements Runnable{
 				running = false;
 				client.close();
 			} 
-		}); 
+		});
+               
  
 		setVisible(true);
  
@@ -168,20 +194,34 @@ public class ClientWindow extends JFrame implements Runnable{
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jMenu1 = new javax.swing.JMenu();
         jScrollPane1 = new javax.swing.JScrollPane();
         txtHistory = new javax.swing.JTextArea();
         btnSend = new javax.swing.JButton();
         txtMessage = new javax.swing.JTextField();
 
+        jMenu1.setText("jMenu1");
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new java.awt.GridBagLayout());
 
         txtHistory.setEditable(false);
-        txtHistory.setColumns(20);
-        txtHistory.setRows(5);
         jScrollPane1.setViewportView(txtHistory);
-        txtHistory.getAccessibleContext().setAccessibleName("");
-        txtHistory.getAccessibleContext().setAccessibleParent(this);
+        txtHistory.getAccessibleContext().setAccessibleName("\"\"");
+        JScrollPane scroll = new JScrollPane(txtHistory);
+        caret = (DefaultCaret) txtHistory.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+        GridBagConstraints scrollConstraints = new GridBagConstraints();
+        scrollConstraints.insets = new Insets(0, 0, 5, 5);
+        scrollConstraints.fill = GridBagConstraints.BOTH;
+        scrollConstraints.gridx = 0;
+        scrollConstraints.gridy = 0;
+        scrollConstraints.gridwidth = 3;
+        scrollConstraints.gridheight = 2;
+        scrollConstraints.weightx = 1;
+        scrollConstraints.weighty = 1;
+        scrollConstraints.insets = new Insets(0, 5, 0, 0);
+        contentPane.add(scroll, scrollConstraints);
 
         getContentPane().add(jScrollPane1, new java.awt.GridBagConstraints());
         jScrollPane1.getAccessibleContext().setAccessibleDescription("");
@@ -192,8 +232,25 @@ public class ClientWindow extends JFrame implements Runnable{
                 btnSendActionPerformed(evt);
             }
         });
+        GridBagConstraints gbc_btnSend = new GridBagConstraints();
+        gbc_btnSend.insets = new Insets(0, 0, 0, 5);
+        gbc_btnSend.gridx = 2;
+        gbc_btnSend.gridy = 2;
+        gbc_btnSend.weightx = 0;
+        gbc_btnSend.weighty = 0;
+        getContentPane().add(btnSend, gbc_btnSend);
         getContentPane().add(btnSend, new java.awt.GridBagConstraints());
 
+        GridBagConstraints gbc_txtMessage = new GridBagConstraints();
+        gbc_txtMessage.insets = new Insets(0, 0, 0, 5);
+        gbc_txtMessage.fill = GridBagConstraints.HORIZONTAL;
+        gbc_txtMessage.gridx = 0;
+        gbc_txtMessage.gridy = 2;
+        gbc_txtMessage.gridwidth = 2;
+        gbc_txtMessage.weightx = 1;
+        gbc_txtMessage.weighty = 0;
+        getContentPane().add(txtMessage, gbc_txtMessage);
+        txtMessage.setColumns(10);
         txtMessage.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtMessageKeyPressed(evt);
@@ -254,6 +311,9 @@ public class ClientWindow extends JFrame implements Runnable{
           }else if(message.startsWith("/i/")){
               String text="/i/"+client.getID()+"/e/";
               send(text,false);
+          }else if(message.startsWith("/u/")){
+              String[] u=message.split("/u/|/n/|/e/");
+              users.update(Arrays.copyOfRange(u, 1, u.length-1));
           }
             }
         }
@@ -268,11 +328,14 @@ public class ClientWindow extends JFrame implements Runnable{
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnSend;
+    private javax.swing.JMenu jMenu1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextArea txtHistory;
     private javax.swing.JTextField txtMessage;
     // End of variables declaration//GEN-END:variables
 private JPanel contentPane;
+private JMenuBar menuBar;
+private JMenuItem mntmOnlineUsers,mntmExit;
     @Override
     public void run() {
         listen();
