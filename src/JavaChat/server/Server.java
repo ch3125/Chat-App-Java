@@ -120,6 +120,7 @@ public class Server  {
                 while(running){
                   
                         sendToAll("/i/server");
+                        setStatus();
                         try {
                                  Thread.sleep(2000);
                          } catch (InterruptedException ex) {
@@ -144,6 +145,15 @@ public class Server  {
             }
         };
         manage.start();
+    }
+    private void setStatus(){
+        if(clients.size()<=0)return;
+        String users="/u/";
+        for(int i=0;i<clients.size()-1;i++){
+            users+=clients.get(i).name+"/n/";
+        }
+        users+=clients.get(clients.size()-1).name+"/e/";
+        sendToAll(users);
     }
     
     private void receive(){
