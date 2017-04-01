@@ -17,6 +17,7 @@ import JavaChat.server.ServerClient;
 import JavaChat.server.UniqueIdentifier;
 import java.net.InetAddress;
 import java.security.SecureRandom;
+import java.util.Scanner;
 import java.util.UUID;
 
 /**
@@ -30,6 +31,7 @@ public class Server  {
     private DatagramSocket socket;
     private boolean running=false;
     private Thread run,manage,send,receive;
+    private boolean raw=false;
     private final int MAX_ATTEMPTS=5;
  
     public Server(int port) {
@@ -48,6 +50,62 @@ public class Server  {
         System.out.println("server started on port "+port);
         manageClients();
         receive();
+         Scanner sc=new Scanner(System.in);
+        while(running){
+           String text=sc.nextLine();
+           if(!text.startsWith("/")){
+               sendToAll("/m/Server: "+text+"/e/");
+               continue;
+           }
+           text=text.substring(1);
+           if(text.startsWith("raw")){
+               raw=!raw;
+           }else if(text.equals("clients")){
+               System.out.println("Clients: ");
+               System.out.println("==========");
+               for(int i=0;i<clients.size();i++){
+                   ServerClient c=clients.get(i);
+                   System.out.println(c.name+" ("+c.getID()+"): "+c.address.toString()+": "+c.port);
+               }
+           }else if(text.startsWith("kick")){
+               // /kick yan
+               String name=text.split(" ")[1];
+               int id=-1;
+               boolean num=false;
+               try{
+                   id=Integer.parseInt(text);
+                   num=true;
+               }catch(NumberFormatException e){
+                   num=false;
+               }
+               if(num){
+                   boolean exists=false;
+                   for(int i=0;i<clients.size();i++){
+                       if(clients.get(i).getID()==id){
+                           exists=true;
+                           break;
+                       }
+                   }
+                   if(exists){
+                       disconnect(id,true);
+                   }
+                   else{
+                       System.out.println("Client "+id+" doesn't exist. Check id number");
+                   }
+               }else{
+                    for(int i=0;i<clients.size();i++){
+                       ServerClient c=clients.get(i);
+                       if(name.equals(c.name)){
+                           disconnect(c.getID(),true);
+                           break;
+                       }
+                       
+                   }
+               }
+               
+           }
+            
+        }
         
     }
         };
@@ -116,6 +174,11 @@ public class Server  {
         receive.start();
     }
     private void sendToAll(String message){
+        if(message.startsWith("/m/")){
+         String text= message.substring(3);
+             text= text.split("/e/")[0];
+             System.out.println(message);}
+       
         for(int i=0;i<clients.size();i++){
             ServerClient client=clients.get(i);
             send(message.getBytes(),client.address,client.port);
@@ -144,13 +207,15 @@ public class Server  {
     }
     private void process(DatagramPacket packet){
         String string=new String(packet.getData());
+         if(raw) System.out.println(string);
         if(string.startsWith("/c/")){
            // UUID id=UUID.randomUUID();
            //id.toString();
             int id=UniqueIdentifier.getIdentifier();
             System.out.println("Identifier : "+id);
-            clients.add(new ServerClient(string.substring(3,string.length()),packet.getAddress(),packet.getPort(),id));
-            System.out.println(string.substring(3,string.length()));
+            String name=string.split("/c/|/e/")[1];
+            System.out.println(name+"("+id+") connected");
+            clients.add(new ServerClient(name,packet.getAddress(),packet.getPort(),id));
             String ID="/c/"+id;
             send(ID,packet.getAddress(),packet.getPort());
         }else if(string.startsWith("/m/")){
@@ -171,15 +236,17 @@ public class Server  {
     }
     private void disconnect(int id,boolean status){
         ServerClient c=null;
-        
+        boolean existed=false;
         for(int i=0;i<clients.size();i++){
             if(clients.get(i).getID()==id){
                 c=clients.get(i);
                 clients.remove(i);
+                existed=true;
                 break;
             }
             
         }
+        if(!existed)return;
         String message="";
         if(status){
             message="Client "+c.name+" ("+c.getID()+") @"+c.address.toString()+":"+c.port+" disconnected";
