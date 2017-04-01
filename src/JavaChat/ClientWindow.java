@@ -206,14 +206,12 @@ public class ClientWindow extends JFrame implements Runnable{
 
     private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
         // TODO add your handling code here:
-        System.out.println("ClientWindow.java--- btnSendActionPerformed");
         String message=txtMessage.getText();
        send(message,true);
     }//GEN-LAST:event_btnSendActionPerformed
 
     private void txtMessageKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtMessageKeyPressed
         // TODO add your handling code here:
-        System.out.println("ClientWindow.java--- txtMessageKeyPressed");
         if(evt.getKeyCode()==KeyEvent.VK_ENTER){
             send(txtMessage.getText(),true);
         }
@@ -227,7 +225,6 @@ public class ClientWindow extends JFrame implements Runnable{
     message=client.getName()+": "+message;
      message="/m/"+message+"/e/";
       txtMessage.setText("");}
-      System.out.println("ClientWindow.java--- send(message)");
      client.send(message.getBytes());
        
 }
